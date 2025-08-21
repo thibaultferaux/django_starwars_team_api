@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'corsheaders',
 
     # Local apps
+    'core',
     'characters',
 ]
 
