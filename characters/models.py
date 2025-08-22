@@ -1,5 +1,4 @@
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
 
 from core.models import SoftDeleteModel
 
@@ -46,5 +45,5 @@ class Master(SoftDeleteModel):
 
     def __str__(self):
         return f"{self.character.name} - Master: {self.master_name}"
-        
+
 
