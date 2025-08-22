@@ -18,5 +18,23 @@ services:
       timeout: 5s
       retries: 3
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api_app
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      - POSTGRES_HOST=db
+      - DEBUG=True # Set to False in production
+    restart: always  # Ensure the API service restarts on failure
+
 volumes:
   db_data:
