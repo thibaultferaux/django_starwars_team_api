@@ -15,6 +15,9 @@ class Character(SoftDeleteModel):
     # Affiliations (stored as JSON)
     affiliations_data = models.JSONField(default=list)
 
+    # AI Generated Fields
+    biography = models.TextField(null=True, blank=True, help_text="AI-generated biography of the character.")
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

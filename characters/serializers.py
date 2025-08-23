@@ -24,6 +24,7 @@ class CharacterDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'height', 'mass', 'gender', 'homeworld',
             'species', 'image_url', 'affiliations', 'masters',
+            'biography',
             'created_at', 'updated_at'
         ]
 
