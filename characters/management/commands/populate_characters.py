@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from characters.models import Character, Master
-from characters.services import BiographyGenerator
+from characters.services import BiographyGenerator, EvilnessClassifier
 
 
 class Command(BaseCommand):
@@ -45,13 +45,14 @@ class Command(BaseCommand):
                     f"Processing first {len(characters_data)} characters."
                 )
 
-            # TODO: Implement AI-generated content handling
             biography_generator = None
+            evilness_classifier = None
 
             if not options["skip_ai"]:
                 try:
                     if settings.OPENAI_API_KEY:
                         biography_generator = BiographyGenerator()
+                        evilness_classifier = EvilnessClassifier()
                         self.stdout.write("AI services initialized.")
                     else:
                         self.stderr.write(
@@ -69,7 +70,7 @@ class Command(BaseCommand):
 
             for char_data in characters_data:
                 try:
-                    character, created = self._process_character(char_data, biography_generator)
+                    character, created = self._process_character(char_data, biography_generator, evilness_classifier)
 
                     if created:
                         created_count += 1
@@ -95,7 +96,7 @@ class Command(BaseCommand):
             self.stderr.write(f"Unexpected error: {e}")
             return
 
-    def _process_character(self, char_data, biography_generator=None):
+    def _process_character(self, char_data, biography_generator=None, evilness_classifier=None):
         """Process a single character from the API data."""
 
         # Get or create character
@@ -113,13 +114,24 @@ class Command(BaseCommand):
             },
         )
 
-        # TODO: Classify evilness properties using AI
-
-        # TODO: Generate biography using AI
-
         # Process masters
         masters_data = char_data.get("masters", [])
         self._process_masters(character, masters_data)
+
+        # Classify evilness
+        if evilness_classifier and not character.is_evil:
+            masters_names = [
+                master.master_name for master in Master.objects.filter(character=character)
+            ]
+            print(f"processing evilness for {character.name} with masters: {masters_names}")
+            try:
+                evilness_result = evilness_classifier.classify_evilness(char_data, masters_names)
+                # Update character with evilness classification
+                character.is_evil = evilness_result.is_evil
+                character.evilness_score = evilness_result.evilness_score
+                character.evilness_explanation = evilness_result.evilness_explanation
+            except Exception as e:
+                self.stdout.write(f"Failed to classify evilness for {character.name}: {e}")
 
         # Generate biography if AI services are available
         if biography_generator and not character.biography:
