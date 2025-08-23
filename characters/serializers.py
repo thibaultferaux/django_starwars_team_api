@@ -29,5 +29,5 @@ class CharacterDetailSerializer(serializers.ModelSerializer):
 
     def get_masters(self, obj):
         """Resturn a list of masters for the character."""
-        masters = Master.objects.filter(characters=obj)
+        masters = Master.objects.filter(character=obj)
         return [master.master_name for master in masters]
