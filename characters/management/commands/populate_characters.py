@@ -1,0 +1,169 @@
+import requests
+
+from django.core.management.base import BaseCommand
+from django.conf import settings
+
+from characters.models import Character, Master
+
+
+class Command(BaseCommand):
+    help = "Populate the database with Star Wars characters from the external API."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--skip-ai",
+            action="store_true",
+            help="Skip AI-generated content (character properties and embeddings).",
+        )
+        parser.add_argument(
+            "--limit",
+            type=int,
+            default=None,
+            help="Limit the number of characters to process",
+        )
+
+    def handle(self, *args, **options):
+        self.stdout.write("Starting to populate characters...")
+
+        try:
+            # Fetch data from external API
+            response = requests.get(
+                settings.STARWARS_API_URL, timeout=30
+            )  # Wait max 30 seconds for a response
+            response.raise_for_status()
+            characters_data = response.json()
+
+            self.stdout.write(
+                f"Fetched {len(characters_data)} characters from the API."
+            )
+
+            # Limit the number of characters if specified
+            if options["limit"]:
+                characters_data = characters_data[: options["limit"]]
+                self.stdout.write(
+                    f"Processing first {len(characters_data)} characters."
+                )
+
+            # TODO: Implement AI-generated content handling
+
+            self.stdout.write("Populating database...")
+
+            created_count = 0
+            updated_count = 0
+
+            for char_data in characters_data:
+                try:
+                    character, created = self._process_character(char_data)
+
+                    if created:
+                        created_count += 1
+                    else:
+                        updated_count += 1
+
+                except Exception as e:
+                    self.stderr.write(
+                        f"Error processing character {char_data.get('name', 'unknown')}: {e}"
+                    )
+                    continue
+
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Successfully processed {created_count + updated_count} characters "
+                    f"({created_count} created, {updated_count} updated)."
+                )
+            )
+
+        except requests.RequestException as e:
+            self.stderr.write(f"Error fetching data from API: {e}")
+            return
+        except Exception as e:
+            self.stderr.write(f"Unexpected error: {e}")
+            return
+
+    def _process_character(self, char_data):
+        """Process a single character from the API data."""
+
+        # Get or create character
+        character, created = Character.objects.update_or_create(
+            id=char_data["id"],
+            defaults={
+                "name": char_data.get("name"),
+                "height": self._safe_float(char_data.get("height")),
+                "mass": self._safe_float(char_data.get("mass")),
+                "gender": char_data.get("gender"),
+                "homeworld": char_data.get("homeworld"),
+                "species": char_data.get("species"),
+                "image_url": char_data.get("image"),
+                "affiliations_data": char_data.get("affiliations", []),
+            },
+        )
+
+        # TODO: Classify evilness properties using AI
+
+        # TODO: Generate biography using AI
+
+        # Process masters
+        masters_data = char_data.get("masters", [])
+        self._process_masters(character, masters_data)
+
+        # Save the character
+        character.save()
+
+        # TODO: Generate embeddings
+
+        return character, created
+
+    def _process_masters(self, character, masters_data):
+        """Process masters data for a character."""
+        if isinstance(masters_data, str):
+            # If masters_data is a string, treat it as a single master
+            masters_data = [masters_data]
+
+        if masters_data:
+            # Clean and prepare master names
+            new_master_names = {
+                name.strip() for name in masters_data if name and name.strip()
+            }
+
+            if new_master_names:
+                # Get existing masters for this character
+                existing_master_names = set(
+                    Master.objects.filter(character=character).values_list(
+                        "master_name", flat=True
+                    )
+                )
+
+                # Determine which masters to add and remove
+                masters_to_add = new_master_names - existing_master_names
+                masters_to_remove = existing_master_names - new_master_names
+
+                # Remove masters that are no longer needed
+                if masters_to_remove:
+                    Master.objects.filter(
+                        character=character, master_name__in=masters_to_remove
+                    ).delete()
+
+                # Add new masters only
+                if masters_to_add:
+                    Master.objects.bulk_create(
+                        [
+                            Master(character=character, master_name=name)
+                            for name in masters_to_add
+                        ]
+                    )
+
+        else:
+            # If no masters data, ensure no masters exist for this character
+            Master.objects.filter(character=character).delete()
+
+    def _safe_float(self, value):
+        """Safely convert value to float"""
+        if value is None or value == "unknown" or value == "":
+            return None
+        try:
+            # Handle comma as decimal separator
+            if isinstance(value, str):
+                value = value.replace(",", ".")
+            return float(value)
+        except (ValueError, TypeError):
+            return None

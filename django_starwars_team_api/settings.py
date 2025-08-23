@@ -151,3 +151,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# External API URLs
+STARWARS_API_URL = os.getenv('STARWARS_API_URL', 'https://akabab.github.io/starwars-api/api/all.json')
