@@ -155,3 +155,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # External API URLs
 STARWARS_API_URL = os.getenv('STARWARS_API_URL', 'https://akabab.github.io/starwars-api/api/all.json')
+
+# OpenAI API Key
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
