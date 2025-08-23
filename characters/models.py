@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from pgvector.django import VectorField
 
 from core.models import SoftDeleteModel
 
@@ -28,6 +29,15 @@ class Character(SoftDeleteModel):
     )
     evilness_explanation = models.TextField(null=True, blank=True, help_text="Explanation of the evilness score by AI.")
 
+    # For semantic search
+    description_embedding = VectorField(
+        dimensions=1536, # Default length of "text-embedding-3-small" embeddings
+        null=True,
+        blank=True,
+        help_text="Vector embedding for semantic search.",
+    )
+
+
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -42,6 +52,24 @@ class Character(SoftDeleteModel):
     def affiliations(self):
         """Return a list of affiliations."""
         return self.affiliations_data if self.affiliations_data else []
+
+    def get_description_for_embeddings(self):
+        """Generate description text for semantic search embedding"""
+        parts = [self.name]
+
+        if self.species:
+            parts.append(f"Species: {self.species}")
+
+        if self.homeworld:
+            parts.append(f"Homeworld: {self.homeworld}")
+
+        if self.affiliations:
+            parts.append(f"Affiliations: {', '.join(self.affiliations)}")
+
+        if self.biography:
+            parts.append(f"Biography: {self.biography}")
+
+        return ". ".join(parts)
 
 
 class Master(SoftDeleteModel):
