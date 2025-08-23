@@ -49,7 +49,7 @@ class Command(BaseCommand):
             self.stdout.write("Populating database...")
 
             created_count = 0
-            updated_count = 0
+            updated_or_skipped_count = 0
 
             for char_data in characters_data:
                 try:
@@ -58,7 +58,7 @@ class Command(BaseCommand):
                     if created:
                         created_count += 1
                     else:
-                        updated_count += 1
+                        updated_or_skipped_count += 1
 
                 except Exception as e:
                     self.stderr.write(
@@ -68,8 +68,7 @@ class Command(BaseCommand):
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Successfully processed {created_count + updated_count} characters "
-                    f"({created_count} created, {updated_count} updated)."
+                    f"Successfully processed {created_count + updated_or_skipped_count} characters (created {created_count} new characters)."
                 )
             )
 
