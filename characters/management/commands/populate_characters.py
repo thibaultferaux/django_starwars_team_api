@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from characters.models import Character, Master
+from characters.services import BiographyGenerator
 
 
 class Command(BaseCommand):
@@ -45,6 +46,21 @@ class Command(BaseCommand):
                 )
 
             # TODO: Implement AI-generated content handling
+            biography_generator = None
+
+            if not options["skip_ai"]:
+                try:
+                    if settings.OPENAI_API_KEY:
+                        biography_generator = BiographyGenerator()
+                        self.stdout.write("AI services initialized.")
+                    else:
+                        self.stderr.write(
+                            "OpenAI API key is not set. Skipping AI-generated content."
+                        )
+                except Exception as e:
+                    self.stderr.write(
+                        f"Failed to initialize AI services: {e}."
+                    )
 
             self.stdout.write("Populating database...")
 
@@ -53,7 +69,7 @@ class Command(BaseCommand):
 
             for char_data in characters_data:
                 try:
-                    character, created = self._process_character(char_data)
+                    character, created = self._process_character(char_data, biography_generator)
 
                     if created:
                         created_count += 1
@@ -79,7 +95,7 @@ class Command(BaseCommand):
             self.stderr.write(f"Unexpected error: {e}")
             return
 
-    def _process_character(self, char_data):
+    def _process_character(self, char_data, biography_generator=None):
         """Process a single character from the API data."""
 
         # Get or create character
@@ -104,6 +120,13 @@ class Command(BaseCommand):
         # Process masters
         masters_data = char_data.get("masters", [])
         self._process_masters(character, masters_data)
+
+        # Generate biography if AI services are available
+        if biography_generator and not character.biography:
+            try:
+                character.biography = biography_generator.generate_biography(char_data)
+            except Exception as e:
+                self.stdout.write(f"Failed to generate biography for {character.name}: {e}")
 
         # Save the character
         character.save()
