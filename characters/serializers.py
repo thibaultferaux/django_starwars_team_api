@@ -12,7 +12,10 @@ class CharacterListSerializer(serializers.ModelSerializer):
     """Serializer for character list (minimal data)"""
     class Meta:
         model = Character
-        fields = ['id', 'name', 'image_url', 'species', 'homeworld']
+        fields = [
+            'id', 'name', 'image_url', 'species',
+            'homeworld', 'is_evil', 'evilness_score'
+        ]
 
 class CharacterDetailSerializer(serializers.ModelSerializer):
     """Serializer for character detail view (full data)"""
@@ -24,7 +27,7 @@ class CharacterDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'height', 'mass', 'gender', 'homeworld',
             'species', 'image_url', 'affiliations', 'masters',
-            'biography',
+            'biography', 'is_evil', 'evilness_score', 'evilness_explanation',
             'created_at', 'updated_at'
         ]
 
