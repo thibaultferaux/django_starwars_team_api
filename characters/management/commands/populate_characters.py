@@ -26,7 +26,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--max-workers",
             type=int,
-            default=4,
+            default=8,
             help="Maximum number of concurrent workers",
         )
 
