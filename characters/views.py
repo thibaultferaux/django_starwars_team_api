@@ -1,6 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+import django_filters
+from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 
 from .models import Character
@@ -8,10 +10,28 @@ from .serializers import CharacterListSerializer, CharacterDetailSerializer, Cha
 from .services import SemanticSearchService
 
 
+class CharacterFilter(django_filters.FilterSet):
+    """Filter class for character list"""
+    name = django_filters.CharFilter(lookup_expr='icontains')
+    species = django_filters.CharFilter(lookup_expr='icontains')
+    homeworld = django_filters.CharFilter(lookup_expr='icontains')
+    is_evil = django_filters.BooleanFilter()
+    min_evilness_score = django_filters.NumberFilter(field_name='evilness_score', lookup_expr='gte')
+    max_evilness_score = django_filters.NumberFilter(field_name='evilness_score', lookup_expr='lte')
+
+    class Meta:
+        model = Character
+        fields = [
+            'name', 'species', 'homeworld', 'is_evil',
+            'min_evilness_score', 'max_evilness_score'
+        ]
+
 class CharacterListView(generics.ListAPIView):
     """List all Star Wars characters with filtering"""
     queryset = Character.objects.all()
     serializer_class = CharacterListSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = CharacterFilter
     ordering = ['name']
 
     def get_queryset(self):
