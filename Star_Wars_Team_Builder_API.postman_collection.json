@@ -1,0 +1,405 @@
+{
+	"info": {
+		"_postman_id": "021e876f-e334-47ce-b2ca-66bf13172f62",
+		"name": "Star Wars Team Builder API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17830124"
+	},
+	"item": [
+		{
+			"name": "Characters",
+			"item": [
+				{
+					"name": "All characters",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/characters/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"characters",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "All characters with filters",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/characters/?name=Skywalker&species=&homeworld=&is_evil=true&min_evilness_score=&max_evilness_score=",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"characters",
+								""
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Skywalker"
+								},
+								{
+									"key": "species",
+									"value": ""
+								},
+								{
+									"key": "homeworld",
+									"value": ""
+								},
+								{
+									"key": "is_evil",
+									"value": "true"
+								},
+								{
+									"key": "min_evilness_score",
+									"value": ""
+								},
+								{
+									"key": "max_evilness_score",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Semantic search on characters",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/characters/search/?query=robot&limit=5",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"characters",
+								"search",
+								""
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "robot"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Character details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/characters/1/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"characters",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search character by name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/characters/?search=luke",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"characters",
+								""
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "luke"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Teams",
+			"item": [
+				{
+					"name": "All teams",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/teams/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"teams",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create new team",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"The rebellions\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/teams/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"teams",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Team details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/teams/1/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"teams",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update team",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"Elite Jedi Council\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/teams/1/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"teams",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete team",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/teams/1/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"teams",
+								"1",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add member to team",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"character_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/teams/1/add-member/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"teams",
+								"1",
+								"add-member",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove member to team",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"character_id\": 1\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/teams/1/remove-member/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"teams",
+								"1",
+								"remove-member",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"test_user\",\r\n    \"password\": \"testuser123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/auth/login/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"test_user\",\r\n    \"email\": \"test@test.com\",\r\n    \"password\": \"testuser123\",\r\n    \"password_confirmation\": \"testuser123\",\r\n    \"first_name\": \"John\",\r\n    \"last_name\": \"Doe\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/auth/register/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "",
+			"type": "default"
+		}
+	]
+}
