@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 
 from characters.models import Character, Master
-from characters.services import BiographyGenerator, EvilnessClassifier
+from characters.services import BiographyGenerator, EvilnessClassifier, SemanticSearchService
 
 
 class Command(BaseCommand):
@@ -47,12 +47,14 @@ class Command(BaseCommand):
 
             biography_generator = None
             evilness_classifier = None
+            search_service = None
 
             if not options["skip_ai"]:
                 try:
                     if settings.OPENAI_API_KEY:
                         biography_generator = BiographyGenerator()
                         evilness_classifier = EvilnessClassifier()
+                        search_service = SemanticSearchService()
                         self.stdout.write("AI services initialized.")
                     else:
                         self.stderr.write(
@@ -70,7 +72,7 @@ class Command(BaseCommand):
 
             for char_data in characters_data:
                 try:
-                    character, created = self._process_character(char_data, biography_generator, evilness_classifier)
+                    character, created = self._process_character(char_data, biography_generator, evilness_classifier, search_service)
 
                     if created:
                         created_count += 1
@@ -96,7 +98,7 @@ class Command(BaseCommand):
             self.stderr.write(f"Unexpected error: {e}")
             return
 
-    def _process_character(self, char_data, biography_generator=None, evilness_classifier=None):
+    def _process_character(self, char_data, biography_generator=None, evilness_classifier=None, search_service=None):
         """Process a single character from the API data."""
 
         # Get or create character
@@ -143,7 +145,14 @@ class Command(BaseCommand):
         # Save the character
         character.save()
 
-        # TODO: Generate embeddings
+        # Generate embeddings for semantic search
+        if search_service:
+            try:
+                search_service.update_character_embedding(character)
+            except Exception as e:
+                self.stdout.write(
+                    f"Failed to generate embedding for {character.name}: {e}"
+                )
 
         return character, created
 

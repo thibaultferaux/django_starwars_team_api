@@ -1,10 +1,12 @@
 from typing import List, Dict, Any
 
 from django.conf import settings
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.messages import HumanMessage
+from sklearn.metrics.pairwise import cosine_similarity
 
 from .schemas import EvilnessClassification
+from .models import Character
 
 
 class BiographyGenerator:
@@ -104,3 +106,56 @@ Provide:
                 evilness_score=0,
                 evilness_explanation=f"Unable to classify {name}. Defaulted to good.",
             )
+
+
+class SemanticSearchService:
+    """Service for semantic search using embeddings"""
+    def __init__(self):
+        if not settings.OPENAI_API_KEY:
+            raise ValueError("OpenAI API key not configured")
+        self.embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-small",
+            api_key=settings.OPENAI_API_KEY
+        )
+
+    def generate_embedding(self, text: str) -> List[float]:
+        """Generate an embedding vector for the given text"""
+        try:
+            return self.embeddings.embed_query(text)
+        except Exception as e:
+            print(f"Error generating embedding: {e}")
+            return []
+
+    def search_characters(self, query: str, limit: int = 10) -> List[Character]:
+        """Perform semantic search on characters"""
+        query_embedding = self.generate_embedding(query)
+        if not query_embedding:
+            return []
+
+        # Get characters with embedding
+        characters = Character.objects.filter(description_embedding__isnull=False)
+        results = []
+        for character in characters:
+            if character.description_embedding:
+                try:
+                    char_embedding = character.description_embedding
+                    similarity = cosine_similarity(
+                        [query_embedding], [char_embedding.vector]
+                    )[0][0]
+                    results.append((character, similarity))
+                except Exception as e:
+                    print(f"Error calculating similarity for {character.name}: {e}")
+                    continue
+
+        # Sort by similarity and limit results
+        results.sort(key=lambda x: x[1], reverse=True)
+        return [char for char, _ in results[:limit]]
+
+    def update_character_embedding(self, character: Character):
+        """Update the character's embedding based on their description"""
+        description = character.get_description_for_embeddings()
+        embedding_vector = self.generate_embedding(description)
+        if embedding_vector:
+            character.description_embedding = embedding_vector
+            character.save(update_fields=["description_embedding"])
+        
