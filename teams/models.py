@@ -97,3 +97,11 @@ class TeamMember(models.Model):
     def __str__(self):
         return f"{self.character.name} in {self.team.name}"
 
+# Add related name to Character model for easy access
+Team.add_to_class('members', models.ManyToManyField(
+    Character,
+    through='TeamMember',
+    related_name='teams',
+    blank=True,
+))
+

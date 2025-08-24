@@ -61,8 +61,8 @@ class TeamDetailSerializer(serializers.ModelSerializer):
         homeworld_count = {}
 
         for member in members:
-            species = member.character.species or 'Unknown'
-            homeworld = member.character.homeworld or 'Unknown'
+            species = member.species or 'Unknown'
+            homeworld = member.homeworld or 'Unknown'
 
             species_count[species] = species_count.get(species, 0) + 1
             homeworld_count[homeworld] = homeworld_count.get(homeworld, 0) + 1
