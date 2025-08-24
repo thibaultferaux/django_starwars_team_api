@@ -1,7 +1,8 @@
 import requests
-
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.db import transaction
 
 from characters.models import Character, Master
 from characters.services import BiographyGenerator, EvilnessClassifier, SemanticSearchService
@@ -22,9 +23,17 @@ class Command(BaseCommand):
             default=None,
             help="Limit the number of characters to process",
         )
+        parser.add_argument(
+            "--max-workers",
+            type=int,
+            default=4,
+            help="Maximum number of concurrent workers",
+        )
 
     def handle(self, *args, **options):
         self.stdout.write("Starting to populate characters...")
+
+        max_workers = options["max_workers"]
 
         try:
             # Fetch data from external API
@@ -65,29 +74,18 @@ class Command(BaseCommand):
                         f"Failed to initialize AI services: {e}."
                     )
 
-            self.stdout.write("Populating database...")
+            # Process all characters concurrently
+            self.stdout.write(f"Processing {len(characters_data)} characters with {max_workers} workers...")
 
-            created_count = 0
-            updated_or_skipped_count = 0
-
-            for char_data in characters_data:
-                try:
-                    character, created = self._process_character(char_data, biography_generator, evilness_classifier, search_service)
-
-                    if created:
-                        created_count += 1
-                    else:
-                        updated_or_skipped_count += 1
-
-                except Exception as e:
-                    self.stderr.write(
-                        f"Error processing character {char_data.get('name', 'unknown')}: {e}"
-                    )
-                    continue
+            total_created, total_updated = self._process_characters_concurrent(
+                characters_data, biography_generator, evilness_classifier,
+                search_service, max_workers
+            )
 
             self.stdout.write(
                 self.style.SUCCESS(
-                    f"Successfully processed {created_count + updated_or_skipped_count} characters (created {created_count} new characters)."
+                    f"Successfully processed {total_created + total_updated} characters "
+                    f"(created {total_created}, updated {total_updated})."
                 )
             )
 
@@ -98,6 +96,52 @@ class Command(BaseCommand):
             self.stderr.write(f"Unexpected error: {e}")
             return
 
+    def _process_characters_concurrent(self, characters_data, biography_generator=None,
+                                     evilness_classifier=None, search_service=None, max_workers=4):
+        """Process all characters concurrently using ThreadPoolExecutor."""
+        created_count = 0
+        updated_count = 0
+        total_characters = len(characters_data)
+        processed_count = 0
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all character processing tasks
+            future_to_char = {
+                executor.submit(
+                    self._process_character,
+                    char_data, biography_generator, evilness_classifier, search_service
+                ): char_data
+                for char_data in characters_data
+            }
+
+            # Process completed tasks as they finish
+            for future in as_completed(future_to_char):
+                char_data = future_to_char[future]
+                processed_count += 1
+
+                try:
+                    character, created = future.result()
+                    if created:
+                        created_count += 1
+                    else:
+                        updated_count += 1
+
+                    # Progress update every 10 characters or at the end
+                    if processed_count % 10 == 0 or processed_count == total_characters:
+                        self.stdout.write(
+                            f"Progress: {processed_count}/{total_characters} characters processed "
+                            f"({created_count} created, {updated_count} updated)"
+                        )
+
+                except Exception as e:
+                    self.stderr.write(
+                        f"Error processing character {char_data.get('name', 'unknown')}: {e}"
+                    )
+                    continue
+
+        return created_count, updated_count
+
+    @transaction.atomic
     def _process_character(self, char_data, biography_generator=None, evilness_classifier=None, search_service=None):
         """Process a single character from the API data."""
 
@@ -125,7 +169,6 @@ class Command(BaseCommand):
             masters_names = [
                 master.master_name for master in Master.objects.filter(character=character)
             ]
-            print(f"processing evilness for {character.name} with masters: {masters_names}")
             try:
                 evilness_result = evilness_classifier.classify_evilness(char_data, masters_names)
                 # Update character with evilness classification
