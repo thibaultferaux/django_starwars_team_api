@@ -126,7 +126,7 @@ class SemanticSearchService:
             print(f"Error generating embedding: {e}")
             return []
 
-    def search_characters(self, query: str, limit: int = 10) -> List[Character]:
+    def search_characters(self, query: str, limit: int = 5) -> List[Character]:
         """Perform semantic search on characters"""
         query_embedding = self.generate_embedding(query)
         if not query_embedding:
@@ -136,11 +136,11 @@ class SemanticSearchService:
         characters = Character.objects.filter(description_embedding__isnull=False)
         results = []
         for character in characters:
-            if character.description_embedding:
+            if character.description_embedding is not None:
                 try:
                     char_embedding = character.description_embedding
                     similarity = cosine_similarity(
-                        [query_embedding], [char_embedding.vector]
+                        [query_embedding], [char_embedding]
                     )[0][0]
                     results.append((character, similarity))
                 except Exception as e:
@@ -158,4 +158,4 @@ class SemanticSearchService:
         if embedding_vector:
             character.description_embedding = embedding_vector
             character.save(update_fields=["description_embedding"])
-        
+

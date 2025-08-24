@@ -35,3 +35,11 @@ class CharacterDetailSerializer(serializers.ModelSerializer):
         """Resturn a list of masters for the character."""
         masters = Master.objects.filter(character=obj)
         return [master.master_name for master in masters]
+
+class CharacterSearchSeializer(serializers.Serializer):
+    """Serializer for semantic search requests"""
+    query = serializers.CharField(
+        max_length=255,
+        help_text="Search query for semantic search",
+    )
+    limit = serializers.IntegerField(default=5, min_value=1, max_value=50, required=False)
