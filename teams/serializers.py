@@ -99,4 +99,13 @@ class RemoveMemberSerializer(serializers.Serializer):
 class TeamCreateUpdateSerializer(serializers.ModelSerializer):
     """Serializer for creating and updating teams"""
 
+    class Meta:
+        model = Team
+        fields = ['name']
+
+    def validate_name(self, value):
+        if not value or not value.strip():
+            raise serializers.ValidationError("Team name cannot be empty.")
+        return value.strip()
+
 
