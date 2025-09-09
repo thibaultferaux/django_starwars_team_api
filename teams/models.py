@@ -3,9 +3,10 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 from characters.models import Character
+from core.models import SoftDeleteModel
 
 
-class Team(models.Model):
+class Team(SoftDeleteModel):
     """Model representing a Star Wars team."""
     name = models.CharField(max_length=200, unique=True, db_index=True)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='teams', null=True, blank=True)
@@ -82,7 +83,7 @@ class Team(models.Model):
         total_score = sum(member.evilness_score for member in members)
         return round(total_score / len(members))
 
-class TeamMember(models.Model):
+class TeamMember(SoftDeleteModel):
     """Many-to-many relationship between teams and characters."""
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='team_members')
     character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='team_memberships')
